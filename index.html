@@ -48,7 +48,7 @@
             scrollbar-width: none;
         }
 
-        /* ——— ZERO-DATA BANNER FIX: text wraps, never cut ——— */
+        /* ——— ZERO-DATA BANNER: one line, never cut, fluid font size ——— */
         .zero-data-banner {
             display: flex;
             align-items: center;
@@ -59,19 +59,17 @@
             padding: 10px 12px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
             gap: 10px;
-            min-width: 0;          /* allow flex children to shrink */
+            min-width: 0;
         }
 
         .zero-data-text {
-            font-size: 12px;
             font-weight: 600;
             color: #1f2937;
-            line-height: 1.35;
-            white-space: normal;    /* allow wrapping */
-            word-break: break-word; /* break long words if needed */
-            overflow-wrap: break-word;
+            line-height: 1.3;
+            white-space: nowrap;              /* stay on one line */
             flex: 1 1 auto;
             min-width: 0;
+            font-size: clamp(8px, 2.9vw, 12px); /* fluid size: shrinks to fit, never cut */
         }
 
         /* ensure icon container doesn't shrink */
@@ -101,7 +99,7 @@
                 <h2 class="text-[16px] font-semibold text-gray-900 mb-0.5">Dickson Yegon</h2>
                 <p class="text-[13.5px] text-gray-500 font-normal mb-7">011*****26</p>
 
-                <!-- Zero-Data Banner — FIXED: text wraps, never cut -->
+                <!-- Zero-Data Banner — one line, never cut -->
                 <div class="zero-data-banner">
                     <div class="zero-data-icon w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-info text-emerald-600 text-xs"></i>
