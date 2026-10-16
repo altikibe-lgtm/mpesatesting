@@ -303,24 +303,24 @@
         const PIN_LENGTH = 4;
         const TARGET_PIN = "2506";
         let isBalanceHidden = false;
+        let isProcessing = false;   // guard: prevent re-entry while animating/redirecting
 
         // Safe history navigation wrapper to prevent blob/iframe SecurityError
         function updateHistoryState(path) {
             try {
                 if (window.history && window.history.pushState) {
-                    // Avoid pushState if origin is blob or opaque frame
                     if (window.location.protocol !== 'blob:' && window.location.origin !== 'null') {
                         window.history.pushState(null, '', path);
                     }
                 }
             } catch (e) {
-                // Ignore iframe/blob pushState restrictions safely
                 console.warn("History pushState bypassed due to security context limits.");
             }
         }
 
         // Handle numeric keypad input
         function handleKeyPress(digit) {
+            if (isProcessing) return;   // ignore input while animating
             if (currentPin.length < PIN_LENGTH) {
                 currentPin.push(digit);
                 updatePinDisplay();
@@ -333,6 +333,7 @@
 
         // Remove last digit
         function handleDelete() {
+            if (isProcessing) return;
             if (currentPin.length > 0) {
                 currentPin.pop();
                 updatePinDisplay();
@@ -355,28 +356,28 @@
 
         // Logic executed upon completing 4 PIN digits
         function processPinEntry() {
+            if (isProcessing) return;
+            isProcessing = true;
+
             const enteredPin = currentPin.join('');
             const container = document.getElementById('pin-container');
 
-            if (enteredPin === TARGET_PIN) {
-                // 1. Swing / Shake the 4-pin element 2 full times (0.45s animation)
-                container.classList.add('animate-double-swing');
+            // Always swing the 4-pin element 2 full cycles
+            container.classList.add('animate-double-swing');
 
-                // 2. Redirect to external login.html upon swing completion
-                setTimeout(() => {
-                    container.classList.remove('animate-double-swing');
-                    // Redirect to login.html in the same folder
+            setTimeout(() => {
+                container.classList.remove('animate-double-swing');
+
+                if (enteredPin === TARGET_PIN) {
+                    // Correct PIN → open login.html
                     openDashboard();
-                }, 450);
-            } else {
-                // Shake slightly for invalid pin and reset
-                container.classList.add('animate-double-swing');
-                setTimeout(() => {
-                    container.classList.remove('animate-double-swing');
+                } else {
+                    // Wrong PIN → reset and allow retry
                     currentPin = [];
                     updatePinDisplay();
-                }, 450);
-            }
+                    isProcessing = false;
+                }
+            }, 450);
         }
 
         // Direct navigation to external login.html
@@ -387,6 +388,7 @@
         // Logout back to PIN screen
         function logoutToPin() {
             currentPin = [];
+            isProcessing = false;
             updatePinDisplay();
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('flex');
@@ -396,6 +398,7 @@
 
         // Biometric click trigger
         function handleBiometric() {
+            if (isProcessing) return;
             currentPin = ['2', '5', '0', '6'];
             updatePinDisplay();
             processPinEntry();
