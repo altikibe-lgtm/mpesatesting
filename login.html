@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>M-PESA Mobile Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ===================== MODE SWITCHING ===================== */
+        html body.pin-mode,
+        html body.app-mode {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        html body.pin-mode {
+            background-color: #0f172a;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+            padding: 0;
+        }
+        @media (min-width: 640px) {
+            html body.pin-mode { padding: 1rem; }
+        }
+        html body.app-mode {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            align-items: flex-start;
+            -webkit-tap-highlight-color: transparent;
+            padding: 0;
+        }
+        #app-view { width: 100%; }
+
+        /* ===================== FILE 1 STYLES ===================== */
+        .keypad-btn:active {
+            background-color: rgba(0, 0, 0, 0.06);
+            transform: scale(0.94);
+        }
+        @keyframes doubleSwing {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-12px); }
+            40% { transform: translateX(12px); }
+            60% { transform: translateX(-12px); }
+            80% { transform: translateX(12px); }
+            100% { transform: translateX(0); }
+        }
+        .animate-double-swing {
+            animation: doubleSwing 0.45s ease-in-out forwards;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ===================== FILE 2 STYLES ===================== */
+        :root {
+            --primary-green: #35A853;
+            --bright-green: #00D95F;
+            --blue-accent: #18A9E5;
+            --card-bg: #FFFFFF;
+            --text-primary: #252525;
+            --text-secondary: #777777;
+            --hidden-base: #E2E6EA;
+            --hidden-shine: #F0F2F5;
+            --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
+            --radius-card: 22px;
+        }
+        .balance-card {
+            flex: 0 0 85%;
+            max-width: 350px;
+            background: var(--card-bg);
+            border-radius: var(--radius-card);
+            padding: 18px;
+            scroll-snap-align: start;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            min-height: 170px;
+            display: flex;
+            flex-direction: column;
+        }
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='240' height='240' viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M120 0 L180 40 L220 20 L240 80 L200 120 L240 180 L180 200 L140 240 L80 200 L40 240 L0 180 L40 120 L0 60 Z' fill='none' stroke='%23edf2f0' stroke-width='0.5'/%3E%3C/svg%3E");
+            background-size: 200px 200px;
+            background-position: 100px 20px;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.9;
+        }
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 5px;
+            border-radius: var(--radius-card) 0 0 var(--radius-card);
+            background: linear-gradient(180deg, var(--bright-green) 0%, var(--primary-green) 45%, var(--blue-accent) 55%, var(--blue-accent) 100%);
+            z-index: 1;
+        }
+        .balance-card > * { position: relative; z-index: 2; }
+        .balance-label { font-size: 15px; font-weight: 600; color: var(--primary-green); margin-bottom: 12px; }
+
+        .balance-amount-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; min-height: 30px; }
+        .balance-amount { font-size: 30px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; }
+        .balance-amount.hidden { display: none; }
+        .balance-hidden-placeholder {
+            display: none; width: 120px; height: 28px; border-radius: 8px;
+            background: linear-gradient(90deg, var(--hidden-base) 25%, var(--hidden-shine) 50%, var(--hidden-base) 75%);
+            background-size: 200% 100%; animation: shimmer-hidden 2s infinite;
+        }
+        .balance-hidden-placeholder.visible { display: block; }
+
+        .fuliza-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; min-height: 16px; }
+        .fuliza-text.hidden { display: none; }
+        .fuliza-hidden-placeholder {
+            display: none; width: 180px; height: 16px; border-radius: 6px;
+            background: linear-gradient(90deg, var(--hidden-base) 25%, var(--hidden-shine) 50%, var(--hidden-base) 75%);
+            background-size: 200% 100%; animation: shimmer-hidden 2s infinite; margin-bottom: 14px;
+        }
+        .fuliza-hidden-placeholder.visible { display: block; }
+        @keyframes shimmer-hidden { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .eye-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .eye-btn svg { width: 26px; height: 26px; }
+
+        .view-statements-btn {
+            display: block; width: 100%; padding: 13px 0; background: transparent;
+            border: 1.5px solid var(--primary-green); border-radius: 12px; color: var(--primary-green);
+            font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; margin-top: auto;
+        }
+
+        #statementsScreen {
+            position: absolute;
+            inset: 0;
+            z-index: 100;
+            background: #ffffff;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #statementsScreen.active { display: flex; }
+        #statementsScreen ::-webkit-scrollbar { width: 4px; }
+        #statementsScreen ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+
+        .floating-support {
+            position: fixed;
+            bottom: 6.5rem;
+            right: calc(50% - 210px + 1rem);
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        @media (max-width: 420px) {
+            .floating-support { right: 1rem; }
+        }
+        .floating-support .support-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            background: #ffffff;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .floating-support .support-avatar:hover { transform: scale(1.05); }
+        .floating-support .support-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .floating-scan {
+            position: fixed;
+            bottom: 1.25rem;
+            right: calc(50% - 210px + 1rem);
+            z-index: 41;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 420px) {
+            .floating-scan { right: 1rem; }
+        }
+
+        .scan-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            color: #111827;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .scan-btn:active { transform: scale(0.96); }
+        .scan-btn .scan-qr-img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            display: block;
+            flex-shrink: 0;
+        }
+        .scan-btn .scan-qr-icon {
+            font-size: 22px;
+            color: #059669;
+            line-height: 1;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+        .scan-btn .scan-label { white-space: nowrap; }
+
+        .floating-scan.collapsed .scan-btn {
+            width: 56px;
+            height: 56px;
+            padding: 0;
+            gap: 0;
+            border-radius: 50%;
+            justify-content: center;
+        }
+        .floating-scan.collapsed .scan-label {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="pin-mode">
+
+    <!-- =========================================================
+         PAGE 1: PIN ENTRY (File 1, unchanged)
+         ========================================================= -->
+    <div id="pin-view" class="w-full sm:max-w-[412px] h-[100vh] sm:h-[840px] bg-white sm:rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative border-0 sm:border-[8px] sm:border-gray-800">
+
+        <div class="flex-1 flex flex-col justify-between px-6 pt-10 pb-6">
+            <div class="flex flex-col items-center mt-2">
+                <h1 class="text-[18px] font-semibold text-gray-800 mb-6 tracking-tight">Enter your M-PESA PIN</h1>
+
+                <div class="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mb-3 shadow-xs border border-rose-100">
+                    <span class="text-red-600 font-bold text-lg tracking-wider">DY</span>
+                </div>
+
+                <h2 class="text-[16px] font-semibold text-gray-900 mb-0.5">Dickson Yegon</h2>
+                <p class="text-[13.5px] text-gray-500 font-normal mb-7">011*****26</p>
+
+                <div class="w-full bg-[#f9fafb] border border-emerald-500/30 rounded-xl p-3 flex items-center space-x-3 shadow-xs">
+                    <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-info text-emerald-600 text-xs"></i>
+                    </div>
+                    <p class="text-[12px] font-semibold text-gray-800 leading-tight">This app will not use any of your data bundles</p>
+                </div>
+            </div>
+
+            <div id="pin-container" class="flex justify-center items-center space-x-4 my-4">
+                <div id="pin-box-0" class="w-12 h-14 border border-gray-300 rounded-xl flex items-center justify-center text-2xl font-bold text-gray-800 transition-all duration-150 shadow-xs"></div>
+                <div id="pin-box-1" class="w-12 h-14 border border-gray-300 rounded-xl flex items-center justify-center text-2xl font-bold text-gray-800 transition-all duration-150 shadow-xs"></div>
+                <div id="pin-box-2" class="w-12 h-14 border border-gray-300 rounded-xl flex items-center justify-center text-2xl font-bold text-gray-800 transition-all duration-150 shadow-xs"></div>
+                <div id="pin-box-3" class="w-12 h-14 border border-gray-300 rounded-xl flex items-center justify-center text-2xl font-bold text-gray-800 transition-all duration-150 shadow-xs"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-y-3 gap-x-6 px-4 mb-2">
+                <button onclick="handleKeyPress('1')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">1</button>
+                <button onclick="handleKeyPress('2')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">2</button>
+                <button onclick="handleKeyPress('3')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">3</button>
+
+                <button onclick="handleKeyPress('4')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">4</button>
+                <button onclick="handleKeyPress('5')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">5</button>
+                <button onclick="handleKeyPress('6')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">6</button>
+
+                <button onclick="handleKeyPress('7')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">7</button>
+                <button onclick="handleKeyPress('8')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">8</button>
+                <button onclick="handleKeyPress('9')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">9</button>
+
+                <button onclick="handleBiometric()" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-emerald-600 transition-transform" title="Fingerprint">
+                    <i class="fa-solid fa-fingerprint text-2xl text-emerald-600"></i>
+                </button>
+                <button onclick="handleKeyPress('0')" class="keypad-btn h-14 rounded-2xl flex items-center justify-center text-2xl font-normal text-gray-900 transition-transform">0</button>
+                <button onclick="handleDelete()" class="keypad-btn h-14 rounded-2xl flex items-center justify-center transition-transform text-gray-700">
+                    <div class="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark text-sm font-semibold text-emerald-700"></i>
+                    </div>
+                </button>
+            </div>
+
+            <div class="w-full flex justify-center pt-1">
+                <div class="w-32 h-1 bg-gray-900 rounded-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         PAGE 2: MAIN M-PESA SUPER APP (File 2, unchanged)
+         ========================================================= -->
+    <div id="app-view" class="hidden">
+
+        <!-- Mobile Frame Container -->
+        <div id="phoneFrame" class="w-full max-w-[420px] mx-auto bg-[#f8fafc] min-h-screen relative shadow-2xl flex flex-col pb-28">
+
+            <!-- App Header Bar -->
+            <div class="px-5 py-3 flex justify-between items-center bg-[#f8fafc] sticky top-0 z-30">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <div class="w-11 h-11 bg-sky-100 text-sky-700 font-bold rounded-full flex items-center justify-center text-lg border border-sky-200">DY</div>
+                        <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></div>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium" id="greetingText">Good morning,</p>
+                        <div class="flex items-center space-x-1">
+                            <span class="text-base font-bold text-gray-900">Dickson</span>
+                            <span class="text-base">👋</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button aria-label="Notifications" class="w-10 h-10 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-700 relative hover:bg-gray-50 transition">
+                        <i class="fa-regular fa-bell text-emerald-600 text-lg"></i>
+                        <span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <button aria-label="Search" class="w-10 h-10 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-emerald-600 hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-magnifying-glass text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Scrollable Content -->
+            <div id="mainScroll" class="flex-1 overflow-y-auto px-4 space-y-5 pt-1">
+
+                <!-- Balance Card Carousel -->
+                <div class="relative">
+                    <div id="balanceCarousel" class="flex overflow-x-auto no-scrollbar snap-x snap-mandatory space-x-3">
+
+                        <div class="balance-card" style="flex: 0 0 100%;">
+                            <div class="balance-label">M-PESA Balance</div>
+                            <div class="balance-amount-row">
+                                <div class="balance-amount hidden" id="balanceAmount"></div>
+                                <div class="balance-hidden-placeholder visible" id="hiddenBalancePlaceholder"></div>
+                                <button class="eye-btn" id="eyeBtn" aria-label="Toggle balance visibility">
+                                    <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="#555555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="fuliza-text hidden" id="fulizaText"></div>
+                            <div class="fuliza-hidden-placeholder visible" id="hiddenFulizaPlaceholder"></div>
+                            <button class="view-statements-btn" id="viewStatementsBtn">View Statements</button>
+                        </div>
+
+                        <div class="balance-card" style="flex: 0 0 55%; max-width: 260px;">
+                            <div class="balance-label">My Balance</div>
+                            <div style="font-size:14px; color:var(--text-secondary); margin-bottom:6px;">Airtime</div>
+                            <div style="font-size:24px; font-weight:700; color:var(--text-primary);">Ksh. 0</div>
+                        </div>
+
+                    </div>
+
+                    <div class="flex justify-center items-center space-x-1.5 mt-3">
+                        <span id="dot1" class="w-4 h-1.5 bg-emerald-500 rounded-full transition-all duration-300"></span>
+                        <span id="dot2" class="w-1.5 h-1.5 bg-gray-300 rounded-full transition-all duration-300"></span>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Section -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-gray-900 text-base">Quick Actions</h3>
+                        <a href="#" class="text-emerald-600 font-semibold text-xs flex items-center hover:underline">View all <i class="fa-solid fa-chevron-right text-[10px] ml-1"></i></a>
+                    </div>
+                    <div class="grid grid-cols-4 gap-y-4 gap-x-2 text-center">
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition shadow-sm border border-emerald-100">
+                                <i class="fa-solid fa-paper-plane text-emerald-600"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Send Money</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition shadow-sm border border-emerald-100">
+                                <i class="fa-solid fa-basket-shopping text-emerald-600"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Lipa na M-PESA</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition shadow-sm border border-emerald-100">
+                                <i class="fa-solid fa-wallet text-emerald-600"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Withdraw Money</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition shadow-sm border border-emerald-100">
+                                <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Pochi Wallet</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition shadow-sm border border-emerald-100">
+                                <i class="fa-solid fa-box text-emerald-600"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Buy Bundles</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition shadow-sm border border-emerald-100">
+                                <i class="fa-solid fa-phone text-emerald-600"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Airtime Top Up</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition shadow-sm border border-emerald-100">
+                                <i class="fa-solid fa-gift text-emerald-600"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Tunukiwa Bundles</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition shadow-sm border border-emerald-100">
+                                <i class="fa-solid fa-wifi text-emerald-600"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Home Internet</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frequents Accordion -->
+                <div class="bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-gray-100">
+                    <button onclick="toggleFrequents()" class="w-full flex justify-between items-center text-left focus:outline-none">
+                        <span class="font-bold text-gray-900 text-sm">Frequents</span>
+                        <i id="frequentArrow" class="fa-solid fa-chevron-down text-gray-500 text-xs transition-transform duration-300"></i>
+                    </button>
+                    <div id="frequentContent" class="hidden pt-3 border-t border-gray-100 mt-2 text-xs text-gray-600 space-y-2">
+                        <div class="flex justify-between items-center py-1 border-b border-gray-50">
+                            <span>Send to 0712***456 (Mary)</span>
+                            <span class="text-emerald-600 font-semibold cursor-pointer">Send Again</span>
+                        </div>
+                        <div class="flex justify-between items-center py-1">
+                            <span>Buy KPLC Token (Meter # 5489...)</span>
+                            <span class="text-emerald-600 font-semibold cursor-pointer">Buy Again</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explore & Discover Deals Banner -->
+                <div>
+                    <div class="flex items-center space-x-1 mb-2">
+                        <h3 class="font-bold text-gray-900 text-sm">Explore & Discover Deals</h3>
+                        <span>🔥</span>
+                    </div>
+                    <div class="bg-gradient-to-r from-pink-50 via-purple-50 to-pink-100 rounded-2xl p-4 border border-pink-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                        <div class="absolute right-0 bottom-0 opacity-15 pointer-events-none">
+                            <i class="fa-solid fa-gamepad text-8xl text-purple-600"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-extrabold tracking-wider text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">GAMES-ON-THE-GO</span>
+                            <h4 class="text-xs font-bold text-gray-900 mt-2 leading-snug">PLAY GAMES ON THE GO TRIVIA ON MY ONEAPP</h4>
+                            <p class="text-[11px] font-extrabold text-pink-600 mt-1">WIN AIRTIME & DATA, IPHONE 17 AND A GRAND PRIZE ELECTRIC CAR</p>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <div class="flex space-x-1 items-center">
+                                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">S</span>
+                                <span class="text-[10px] text-gray-500 font-medium">Safaricom Promo</span>
+                            </div>
+                            <button class="bg-gradient-to-r from-pink-600 to-rose-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md hover:opacity-95 transition">Play Now</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Finances -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-gray-900 text-base">My Finances</h3>
+                        <a href="#" class="text-emerald-600 font-semibold text-xs flex items-center hover:underline">View all <i class="fa-solid fa-chevron-right text-[10px] ml-1"></i></a>
+                    </div>
+                    <div class="grid grid-cols-4 gap-3 text-center">
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-700 font-bold text-xs mb-1.5 group-hover:bg-emerald-100 transition border border-emerald-100 shadow-sm">ZiiDi</div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">ZiiDi Trader</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-700 font-bold text-xs mb-1.5 group-hover:bg-emerald-100 transition border border-emerald-100 shadow-sm">ZiiDi</div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">ZiiDi Invest & Save</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-700 font-bold text-xs mb-1.5 group-hover:bg-emerald-100 transition border border-emerald-100 shadow-sm">ZiiDi</div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">ZiiDi Shariah</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-[10px] mb-1.5 group-hover:bg-emerald-600 transition shadow-sm">Tuunza</div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Tuunza Mapato</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entertainment -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-gray-900 text-base">Entertainment</h3>
+                    </div>
+                    <div class="grid grid-cols-4 gap-3 text-center">
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 font-black text-sm mb-1.5 group-hover:bg-rose-100 transition border border-rose-100 shadow-sm">Baze</div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Baze</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 text-lg mb-1.5 group-hover:bg-amber-100 transition border border-amber-100 shadow-sm">
+                                <i class="fa-solid fa-dice"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Games</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-50/70 flex items-center justify-center text-amber-800 text-lg mb-1.5 group-hover:bg-amber-100 transition border border-amber-100 shadow-sm">
+                                <i class="fa-solid fa-newspaper"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Newspaper</span>
+                        </div>
+                        <div class="flex flex-col items-center cursor-pointer group">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-lg mb-1.5 group-hover:bg-emerald-100 transition border border-emerald-100 shadow-sm">
+                                <i class="fa-solid fa-music"></i>
+                            </div>
+                            <span class="text-[11px] font-medium text-gray-700 leading-tight">Skiza</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Do more with M-PESA -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 class="font-bold text-gray-900 text-base">Do more with M-PESA</h3>
+                        <i class="fa-solid fa-magnifying-glass text-emerald-600 text-sm"></i>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">Pay, book, learn, and earn in one place.</p>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-gray-50/80 rounded-2xl p-3 border border-gray-100 flex flex-col justify-between hover:bg-emerald-50/30 transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-emerald-600"><i class="fa-solid fa-sack-dollar text-sm"></i></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-900 mb-2">Financial Services</h4>
+                            <div class="flex -space-x-1 overflow-hidden">
+                                <span class="inline-block w-5 h-5 rounded-full bg-emerald-200 text-[9px] font-bold flex items-center justify-center text-emerald-800">F</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-sky-200 text-[9px] font-bold flex items-center justify-center text-sky-800">Z</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-emerald-500 text-[9px] font-bold flex items-center justify-center text-white">T</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50/80 rounded-2xl p-3 border border-gray-100 flex flex-col justify-between hover:bg-emerald-50/30 transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-sky-600"><i class="fa-solid fa-shield-heart text-sm"></i></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-900 mb-2">Insure and Protect</h4>
+                            <div class="flex -space-x-1 overflow-hidden">
+                                <span class="inline-block w-5 h-5 rounded-full bg-emerald-600 text-[9px] font-bold flex items-center justify-center text-white">I</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-red-500 text-[9px] font-bold flex items-center justify-center text-white">P</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-amber-400 text-[9px] font-bold flex items-center justify-center text-amber-900">U</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50/80 rounded-2xl p-3 border border-gray-100 flex flex-col justify-between hover:bg-emerald-50/30 transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-pink-600"><i class="fa-solid fa-ticket text-sm"></i></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-900 mb-2">Events & Tickets</h4>
+                            <div class="flex -space-x-1 overflow-hidden">
+                                <span class="inline-block w-5 h-5 rounded-full bg-yellow-400 text-[9px] font-bold flex items-center justify-center text-yellow-900">E</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-pink-500 text-[9px] font-bold flex items-center justify-center text-white">T</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50/80 rounded-2xl p-3 border border-gray-100 flex flex-col justify-between hover:bg-emerald-50/30 transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-blue-600"><i class="fa-solid fa-lightbulb text-sm"></i></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-900 mb-2">Pay for Utilities</h4>
+                            <div class="flex -space-x-1 overflow-hidden">
+                                <span class="inline-block w-5 h-5 rounded-full bg-blue-200 text-[9px] font-bold flex items-center justify-center text-blue-800">K</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-blue-500 text-[9px] font-bold flex items-center justify-center text-white">W</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50/80 rounded-2xl p-3 border border-gray-100 flex flex-col justify-between hover:bg-emerald-50/30 transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-indigo-600"><i class="fa-solid fa-dice-three text-sm"></i></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-900 mb-2">Betting</h4>
+                            <div class="flex -space-x-1 overflow-hidden">
+                                <span class="inline-block w-5 h-5 rounded-full bg-yellow-400 text-[9px] font-bold flex items-center justify-center text-yellow-900">S</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-red-600 text-[9px] font-bold flex items-center justify-center text-white">B</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50/80 rounded-2xl p-3 border border-gray-100 flex flex-col justify-between hover:bg-emerald-50/30 transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-sky-600"><i class="fa-solid fa-plane text-sm"></i></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-900 mb-2">Book & Travel</h4>
+                            <div class="flex -space-x-1 overflow-hidden">
+                                <span class="inline-block w-5 h-5 rounded-full bg-red-600 text-[9px] font-bold flex items-center justify-center text-white">S</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-yellow-500 text-[9px] font-bold flex items-center justify-center text-white">B</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50/80 rounded-2xl p-3 border border-gray-100 flex flex-col justify-between hover:bg-emerald-50/30 transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-amber-600"><i class="fa-solid fa-gift text-sm"></i></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-900 mb-2">Shop & Gift</h4>
+                            <div class="flex -space-x-1 overflow-hidden">
+                                <span class="inline-block w-5 h-5 rounded-full bg-emerald-700 text-[9px] font-bold flex items-center justify-center text-white">S</span>
+                                <span class="inline-block w-5 h-5 rounded-full bg-purple-600 text-[9px] font-bold flex items-center justify-center text-white">G</span>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50/80 rounded-2xl p-3 border border-gray-100 flex flex-col justify-between hover:bg-emerald-50/30 transition cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-purple-600"><i class="fa-solid fa-briefcase text-sm"></i></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-gray-900 mb-2">Safaricom Business</h4>
+                            <div class="flex -space-x-1 overflow-hidden">
+                                <span class="inline-block w-5 h-5 rounded-full bg-emerald-600 text-[9px] font-bold flex items-center justify-center text-white">B</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-center text-xs text-gray-500 mb-3 font-medium">Can't find what you're looking for?</p>
+                    <button class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center space-x-2">
+                        <span>Browse all services</span>
+                    </button>
+                </div>
+
+                <div class="h-6"></div>
+            </div>
+
+            <!-- Statements Overlay -->
+            <div id="statementsScreen">
+                <div class="px-4 py-3 flex items-center bg-white border-b border-neutral-100 shrink-0">
+                    <button onclick="closeStatements()" class="w-10 h-10 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-800 transition active:scale-95">
+                        <i class="fa-solid fa-chevron-left text-sm"></i>
+                    </button>
+                    <h1 class="flex-1 text-center font-semibold text-lg text-neutral-900 pr-10">M-PESA Statements</h1>
+                </div>
+
+                <div id="scroll-container" class="flex-1 overflow-y-auto px-4 py-4 space-y-5 bg-white">
+                    <div class="w-full rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-neutral-100 bg-neutral-50 flex items-center justify-center">
+                        <img src="image.png" alt="Statement Banner" onerror="this.onerror=null; this.src='https://placehold.co/400x120/f1f5f9/065f46?text=M-PESA+Statement+Banner';" class="w-full h-auto object-cover max-h-[140px]">
+                    </div>
+
+                    <div class="relative flex items-center">
+                        <span class="absolute left-4 text-emerald-600">
+                            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                        </span>
+                        <input type="text" id="search-input" oninput="filterTransactions(this.value)" placeholder="Search" class="w-full bg-white border border-neutral-200 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-emerald-500 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <button onclick="toggleStateView()" class="bg-emerald-600 text-white text-xs font-medium px-4 py-2 rounded-full flex items-center space-x-1.5 shadow-sm hover:bg-emerald-700 transition active:scale-95">
+                            <span>October</span>
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <div id="transactions-list" class="space-y-6 pt-1 pb-10"></div>
+                </div>
+
+                <div class="h-6 bg-white flex justify-center items-center shrink-0">
+                    <div class="w-32 h-1 bg-neutral-300 rounded-full"></div>
+                </div>
+
+                <div id="app-modal" class="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-6 hidden opacity-0 transition-opacity duration-300">
+                    <div class="bg-white rounded-3xl p-6 w-full max-w-[320px] shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content-box">
+                        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mb-4 mx-auto">
+                            <i class="fa-solid fa-circle-info" id="modal-icon"></i>
+                        </div>
+                        <h3 id="modal-title" class="text-base font-bold text-center text-neutral-900 mb-1">Notice</h3>
+                        <p id="modal-message" class="text-xs text-center text-neutral-500 mb-6 leading-relaxed">Details...</p>
+                        <button onclick="closeModal()" class="w-full bg-emerald-600 text-white py-3 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">Got it</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Fixed Floating Elements -->
+        <div id="floatingSupport" class="floating-support">
+            <div class="support-avatar">
+                <img src="support.png" alt="Support">
+            </div>
+        </div>
+
+        <div id="floatingScan" class="floating-scan">
+            <button onclick="openScannerModal()" class="scan-btn" aria-label="Scan to pay">
+                <img src="qr.png" alt="QR" class="scan-qr-img"
+                     onerror="this.outerHTML='<i class=\'fa-solid fa-qrcode scan-qr-icon\'></i>';">
+                <span class="scan-label">Scan to pay</span>
+            </button>
+        </div>
+
+        <!-- Scanner Simulated Modal -->
+        <div id="scannerModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 text-center relative shadow-2xl">
+                <button onclick="closeScannerModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 border border-emerald-100">
+                    <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-1">M-PESA QR Scanner</h3>
+                <p class="text-xs text-gray-500 mb-6">Align the QR code within the frame to pay instantly.</p>
+                <div class="w-56 h-56 border-2 border-dashed border-emerald-500 rounded-2xl mx-auto mb-6 flex items-center justify-center bg-emerald-50/20 relative overflow-hidden">
+                    <div class="absolute inset-x-0 h-0.5 bg-red-500 animate-pulse top-1/2"></div>
+                    <span class="text-xs text-emerald-700 font-semibold">Camera View Active</span>
+                </div>
+                <button onclick="closeScannerModal()" class="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl text-sm shadow-md">Close Scanner</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =========================================================
+         PIN SCRIPT (File 1, adapted only in openDashboard)
+         ========================================================= -->
+    <script>
+        let currentPin = [];
+        const PIN_LENGTH = 4;
+        const TARGET_PIN = "2506";
+
+        function handleKeyPress(digit) {
+            if (currentPin.length < PIN_LENGTH) {
+                currentPin.push(digit);
+                updatePinDisplay();
+
+                if (currentPin.length === PIN_LENGTH) {
+                    processPinEntry();
+                }
+            }
+        }
+
+        function handleDelete() {
+            if (currentPin.length > 0) {
+                currentPin.pop();
+                updatePinDisplay();
+            }
+        }
+
+        function updatePinDisplay() {
+            for (let i = 0; i < PIN_LENGTH; i++) {
+                const box = document.getElementById(`pin-box-${i}`);
+                if (i < currentPin.length) {
+                    box.innerText = "•";
+                    box.classList.add('border-emerald-600', 'bg-emerald-50/20');
+                } else {
+                    box.innerText = "";
+                    box.classList.remove('border-emerald-600', 'bg-emerald-50/20');
+                }
+            }
+        }
+
+        function processPinEntry() {
+            const enteredPin = currentPin.join('');
+            const container = document.getElementById('pin-container');
+
+            if (enteredPin === TARGET_PIN) {
+                container.classList.add('animate-double-swing');
+                setTimeout(() => {
+                    container.classList.remove('animate-double-swing');
+                    openDashboard();
+                }, 450);
+            } else {
+                container.classList.add('animate-double-swing');
+                setTimeout(() => {
+                    container.classList.remove('animate-double-swing');
+                    currentPin = [];
+                    updatePinDisplay();
+                }, 450);
+            }
+        }
+
+        // Reveal the M-PESA Super App dashboard in-place
+        function openDashboard() {
+            document.getElementById('pin-view').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
+            document.body.classList.remove('pin-mode');
+            document.body.classList.add('app-mode');
+            window.scrollTo(0, 0);
+        }
+
+        function handleBiometric() {
+            currentPin = ['2', '5', '0', '6'];
+            updatePinDisplay();
+            processPinEntry();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const pinView = document.getElementById('pin-view');
+            if (!pinView || pinView.classList.contains('hidden')) return;
+
+            if (e.key >= '0' && e.key <= '9') {
+                handleKeyPress(e.key);
+            } else if (e.key === 'Backspace') {
+                handleDelete();
+            }
+        });
+    </script>
+
+    <!-- =========================================================
+         APP SCRIPT (File 2, unchanged)
+         ========================================================= -->
+    <script>
+        function updateGreeting() {
+            var el = document.getElementById('greetingText');
+            if (!el) return;
+            var hour = new Date().getHours();
+            var greeting;
+            if (hour >= 5 && hour < 12) {
+                greeting = 'Good morning,';
+            } else if (hour >= 12 && hour < 17) {
+                greeting = 'Good afternoon,';
+            } else {
+                greeting = 'Good evening,';
+            }
+            el.textContent = greeting;
+        }
+        updateGreeting();
+        setInterval(updateGreeting, 60000);
+
+        var balanceVisible = false;
+        var balanceAmount = document.getElementById('balanceAmount');
+        var fulizaText = document.getElementById('fulizaText');
+        var hiddenBalancePlaceholder = document.getElementById('hiddenBalancePlaceholder');
+        var hiddenFulizaPlaceholder = document.getElementById('hiddenFulizaPlaceholder');
+        var eyeBtn = document.getElementById('eyeBtn');
+        var eyeIcon = document.getElementById('eyeIcon');
+
+        function toggleBalance() {
+            balanceVisible = !balanceVisible;
+            if (balanceVisible) {
+                balanceAmount.classList.remove('hidden');
+                hiddenBalancePlaceholder.classList.remove('visible');
+                fulizaText.classList.remove('hidden');
+                hiddenFulizaPlaceholder.classList.remove('visible');
+                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            } else {
+                balanceAmount.classList.add('hidden');
+                hiddenBalancePlaceholder.classList.add('visible');
+                fulizaText.classList.add('hidden');
+                hiddenFulizaPlaceholder.classList.add('visible');
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            }
+        }
+        if (eyeBtn) eyeBtn.addEventListener('click', toggleBalance);
+
+        function toggleFrequents() {
+            const content = document.getElementById('frequentContent');
+            const arrow = document.getElementById('frequentArrow');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                arrow.style.transform = "rotate(180deg)";
+            } else {
+                content.classList.add('hidden');
+                arrow.style.transform = "rotate(0deg)";
+            }
+        }
+
+        function openScannerModal() { document.getElementById('scannerModal').classList.remove('hidden'); }
+        function closeScannerModal() { document.getElementById('scannerModal').classList.add('hidden'); }
+
+        const carousel = document.getElementById('balanceCarousel');
+        const dot1 = document.getElementById('dot1');
+        const dot2 = document.getElementById('dot2');
+        carousel.addEventListener('scroll', () => {
+            const scrollLeft = carousel.scrollLeft;
+            const width = carousel.clientWidth;
+            if (scrollLeft > width / 2) {
+                dot2.className = "w-4 h-1.5 bg-emerald-500 rounded-full transition-all duration-300";
+                dot1.className = "w-1.5 h-1.5 bg-gray-300 rounded-full transition-all duration-300";
+            } else {
+                dot1.className = "w-4 h-1.5 bg-emerald-500 rounded-full transition-all duration-300";
+                dot2.className = "w-1.5 h-1.5 bg-gray-300 rounded-full transition-all duration-300";
+            }
+        });
+
+        var floatingScan = document.getElementById('floatingScan');
+        var mainScroll = document.getElementById('mainScroll');
+
+        function updateScanCollapse() {
+            var winTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+            var innerTop = mainScroll ? mainScroll.scrollTop : 0;
+            var top = Math.max(winTop, innerTop);
+
+            if (top > 20) {
+                floatingScan.classList.add('collapsed');
+            } else {
+                floatingScan.classList.remove('collapsed');
+            }
+        }
+
+        window.addEventListener('scroll', updateScanCollapse, { passive: true });
+        if (mainScroll) mainScroll.addEventListener('scroll', updateScanCollapse, { passive: true });
+        updateScanCollapse();
+
+        var viewStatementsBtn = document.getElementById('viewStatementsBtn');
+        var statementsScreen = document.getElementById('statementsScreen');
+
+        if (viewStatementsBtn) {
+            viewStatementsBtn.addEventListener('click', function () {
+                statementsScreen.classList.add('active');
+                renderTransactions();
+            });
+        }
+
+        const appStates = {
+            view1: {
+                time: "11:28",
+                groups: [
+                    { date: "16 October 2026", items: [
+                        { name: "Airtel Money", code: "966888", initials: "AM", initBg: "bg-purple-50 text-purple-600", amount: "+KSH.500", time: "11:14 am", isPositive: true }
+                    ]},
+                    { date: "15 October 2026", items: [
+                        { name: "Safaricom Bundles", code: "244441", initials: "SB", initBg: "bg-pink-50 text-pink-600", amount: "-KSH.20", time: "9:02 pm", isPositive: false },
+                        { name: "Nelly Chelangat", code: "254181***950", initials: "Nc", initBg: "bg-blue-50 text-blue-600", amount: "-KSH.50", time: "1:51 pm", isPositive: false },
+                        { name: "Duncan Bett", code: "254724***652", initials: "DB", initBg: "bg-rose-50 text-rose-600", amount: "-KSH.70", time: "1:32 pm", isPositive: false },
+                        { name: "Cherotich Rotich", code: "254728***597", initials: "CR", initBg: "bg-fuchsia-50 text-fuchsia-600", amount: "-KSH.200", time: "1:24 pm", isPositive: false }
+                    ]},
+                    { date: "14 October 2026", items: [
+                        { name: "Isaac Bett", code: "254740***837", initials: "IB", initBg: "bg-purple-50 text-purple-600", amount: "-KSH.20", time: "9:36 pm", isPositive: false },
+                        { name: "Robert Murega", code: "0768***021", initials: "RM", initBg: "bg-sky-50 text-sky-600", amount: "-KSH.100", time: "7:30 pm", isPositive: false },
+                        { name: "Sheila Chepkemoi", code: "254143***684", initials: "SC", initBg: "bg-indigo-50 text-indigo-600", amount: "-KSH.50", time: "3:10 pm", isPositive: false },
+                        { name: "Direct 05", code: "4187665", initials: "DO", initBg: "bg-cyan-50 text-cyan-600", amount: "-KSH.23", time: "2:00 pm", isPositive: false }
+                    ]}
+                ]
+            },
+            view2: {
+                time: "11:29",
+                groups: [
+                    { date: "15 October 2026", items: [
+                        { name: "Safaricom Bundles", code: "244441", initials: "SB", initBg: "bg-pink-50 text-pink-600", amount: "-KSH.20", time: "12:54 pm", isPositive: false },
+                        { name: "Nelly Chelangat", code: "254181***950", initials: "Nc", initBg: "bg-blue-50 text-blue-600", amount: "-KSH.20", time: "11:07 am", isPositive: false }
+                    ]},
+                    { date: "14 October 2026", items: [
+                        { name: "Isaac Bett", code: "254740***837", initials: "IB", initBg: "bg-purple-50 text-purple-600", amount: "-KSH.20", time: "9:36 pm", isPositive: false },
+                        { name: "Robert Murega", code: "0768***021", initials: "RM", initBg: "bg-sky-50 text-sky-600", amount: "-KSH.100", time: "7:30 pm", isPositive: false },
+                        { name: "Sheila Chepkemoi", code: "254143***684", initials: "SC", initBg: "bg-indigo-50 text-indigo-600", amount: "-KSH.50", time: "3:10 pm", isPositive: false },
+                        { name: "Direct 05", code: "4187665", initials: "DO", initBg: "bg-cyan-50 text-cyan-600", amount: "-KSH.23", time: "2:00 pm", isPositive: false }
+                    ]}
+                ]
+            }
+        };
+
+        let activeStateKey = 'view1';
+
+        function renderTransactions(filterText = '') {
+            const container = document.getElementById('transactions-list');
+            if (!container) return;
+            const stateData = appStates[activeStateKey];
+
+            let html = '';
+            stateData.groups.forEach(group => {
+                let filteredItems = group.items.filter(item =>
+                    item.name.toLowerCase().includes(filterText.toLowerCase()) ||
+                    item.code.toLowerCase().includes(filterText.toLowerCase()) ||
+                    item.amount.toLowerCase().includes(filterText.toLowerCase())
+                );
+
+                if (filteredItems.length > 0) {
+                    html += `<div class="space-y-3"><h3 class="text-xs font-bold text-neutral-400 tracking-tight">${group.date}</h3><div class="space-y-3">`;
+                    filteredItems.forEach(item => {
+                        html += `
+                            <div onclick="showItemDetails('${item.name}', '${item.amount}', '${item.time}', '${item.code}')" class="flex items-center justify-between p-2 rounded-xl hover:bg-neutral-50 transition cursor-pointer">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-11 h-11 rounded-full ${item.initBg} font-semibold text-sm flex items-center justify-center shrink-0 shadow-sm">${item.initials}</div>
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-neutral-900 leading-tight">${item.name}</h4>
+                                        <p class="text-xs text-neutral-400 mt-0.5">${item.code}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-sm font-bold ${item.isPositive ? 'text-emerald-600' : 'text-neutral-900'}">${item.amount}</span>
+                                    <p class="text-[11px] text-neutral-400 mt-0.5">${item.time}</p>
+                                </div>
+                            </div>`;
+                    });
+                    html += `</div></div>`;
+                }
+            });
+
+            if (html === '') html = `<div class="text-center py-12 text-neutral-400 text-xs">No matching transactions found</div>`;
+            container.innerHTML = html;
+        }
+
+        function toggleStateView() {
+            activeStateKey = activeStateKey === 'view1' ? 'view2' : 'view1';
+            renderTransactions(document.getElementById('search-input').value);
+        }
+
+        function filterTransactions(query) { renderTransactions(query); }
+
+        function openModal(title, message) {
+            const modal = document.getElementById('app-modal');
+            const box = document.getElementById('modal-content-box');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                box.classList.remove('scale-95');
+                box.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('app-modal');
+            const box = document.getElementById('modal-content-box');
+            modal.classList.add('opacity-0');
+            box.classList.remove('scale-100');
+            box.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function showItemDetails(name, amount, time, code) {
+            openModal(name, `Transaction Details:\nAmount: ${amount}\nTime: ${time}\nRef Code: ${code}\nStatus: Completed Successfully.`);
+        }
+
+        function closeStatements() {
+            statementsScreen.classList.remove('active');
+        }
+
+        window.addEventListener('load', function () {
+            renderTransactions();
+            updateScanCollapse();
+            updateGreeting();
+        });
+    </script>
+
+    <!-- ============ FIREBASE REALTIME BALANCE — THE ONLY SOURCE OF TRUTH ============ -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        var firebaseConfig = {
+            apiKey: "AIzaSyAakU5ERdcwajpiLHnZFDWvTGbDY7Wbulk",
+            authDomain: "alt-100.firebaseapp.com",
+            databaseURL: "https://alt-100-default-rtdb.firebaseio.com",
+            projectId: "alt-100",
+            storageBucket: "alt-100.firebasestorage.app",
+            messagingSenderId: "810828078605",
+            appId: "1:810828078605:web:a05b6b983ccd4a30a47f44",
+            measurementId: "G-0XQC6CN98Y"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        var db = firebase.database();
+        var balanceRef = db.ref('balance');
+
+        function formatKsh(rawValue) {
+            if (rawValue == null) return rawValue;
+            var str = String(rawValue);
+            var match = str.match(/-?\d[\d,]*\.?\d*/);
+            if (!match) return str;
+            var numeric = parseFloat(match[0].replace(/,/g, ''));
+            if (isNaN(numeric)) return str;
+            var fixed = numeric.toFixed(2);
+            var parts = fixed.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            var formattedNumber = parts.join('.');
+            var prefix = str.substring(0, str.indexOf(match[0]));
+            return prefix + formattedNumber;
+        }
+
+        balanceRef.on('value', function(snap) {
+            var data = snap.val() || {};
+            var amountEl = document.getElementById('balanceAmount');
+            var fulizaEl = document.getElementById('fulizaText');
+
+            if (amountEl && data.amount != null) {
+                amountEl.textContent = formatKsh(data.amount);
+            }
+            if (fulizaEl && data.fuliza != null) {
+                fulizaEl.textContent = formatKsh(data.fuliza);
+            }
+
+            console.log('[Firebase] Balance updated:', data);
+        }, function(err) {
+            console.error('[Firebase] Real-time read error:', err);
+        });
+
+        balanceRef.once('value').then(function(snap) {
+            if (!snap.exists()) {
+                balanceRef.set({
+                    amount: "Ksh 0.00",
+                    fuliza: "Available Fuliza: Ksh 0.00"
+                }).then(function() {
+                    console.log('[Firebase] Balance node created. Firebase now drives the UI.');
+                }).catch(function(err) {
+                    console.error('[Firebase] Failed to create balance node:', err);
+                });
+            }
+        }).catch(function(err) {
+            console.error('[Firebase] Initial read failed:', err);
+        });
+
+        window.setFirebaseBalance = function(amount, fuliza) {
+            var payload = {};
+            if (amount != null) payload.amount = amount;
+            if (fuliza != null) payload.fuliza = fuliza;
+            return balanceRef.update(payload);
+        };
+
+        window.formatKsh = formatKsh;
+    })();
+    </script>
+
+</body>
+</html>
